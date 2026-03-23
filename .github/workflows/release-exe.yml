@@ -130,11 +130,7 @@ jobs:
         working-directory: electron
         shell: pwsh
         run: |
-          yarn electron-rebuild `
-            --version "${{ steps.electron_version.outputs.value }}" `
-            --module-dir ".\server\node_modules" `
-            --only better-sqlite3 `
-            --force
+          node -e "const path = require('node:path'); const { rebuild } = require('@electron/rebuild'); rebuild({ buildPath: path.resolve('server'), electronVersion: '${{ steps.electron_version.outputs.value }}', onlyModules: ['better-sqlite3'], force: true }).catch((error) => { console.error(error); process.exit(1); });"
 
       - name: Build Windows installer
         working-directory: electron
