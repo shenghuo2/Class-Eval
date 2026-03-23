@@ -137,14 +137,35 @@ jobs:
         shell: pwsh
         run: yarn build
 
+      - name: Ensure release tag exists on origin
+        shell: pwsh
+        run: |
+          $tag = "${env:TAG_NAME}"
+          $releaseSha = "${{ steps.release_source.outputs.release_sha }}"
+          git fetch --force --tags origin
+
+          $remoteTag = git ls-remote --tags origin "refs/tags/$tag"
+          if (-not $remoteTag) {
+            git tag $tag $releaseSha
+            git push origin $tag
+          }
+
       - name: Create or update GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.TAG_NAME }}
-          target_commitish: ${{ steps.release_source.outputs.release_sha }}
-          name: ${{ env.TAG_NAME }}
-          generate_release_notes: true
-          overwrite_files: true
-          fail_on_unmatched_files: true
-          files: |
-            electron/dist-exe/*.exe
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $tag = "${env:TAG_NAME}"
+          $releaseSha = "${{ steps.release_source.outputs.release_sha }}"
+          $assets = Get-ChildItem "electron/dist-exe/*.exe" | ForEach-Object { $_.FullName }
+
+          if (-not $assets -or $assets.Count -eq 0) {
+            throw "No EXE artifacts found in electron/dist-exe"
+          }
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $assets --clobber
+          } else {
+            gh release create $tag $assets --title $tag --generate-notes --target $releaseSha
+          }
