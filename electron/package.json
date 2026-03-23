@@ -1,6 +1,6 @@
 {
   "name": "classroom-eval",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "课堂评测系统",
   "main": "main.js",
   "scripts": {
@@ -22,7 +22,12 @@
     },
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "icon.ico"
     },
